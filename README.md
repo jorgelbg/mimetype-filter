@@ -6,7 +6,7 @@ Nutch 1.x plugin that allows to filter the indexed documents by the MIME type pr
 Configuration
 -------------
 
-A custom configuration file that will hold the rules could be specified using the a property `mimetype.filter.file` in your `nutch-site.xml` file:
+A custom configuration file that will hold the rules that can be specified using the a property `mimetype.filter.file` in your `nutch-site.xml` file:
 
 ```xml
 <property>
@@ -15,9 +15,9 @@ A custom configuration file that will hold the rules could be specified using th
 </property>
 ```
 
-If no `mimetype.filter.file` key is found in your `nutch-site.xml` file a allow all policy is used instead so all your crawled document will be indexed. 
+If no `mimetype.filter.file` key is found in your `nutch-site.xml` file an `allow` policy is used instead, so all your crawled documents will be indexed.
 
-The rule configuration file use the same format as the `urlfilter-suffix` plugin, basically it starts with a general policy (`+` to allow everything and `-` to block everything) an it follows with a list of exceptions to the general rule, so:
+The rules configuration file use the same format as the `urlfilter-suffix` plugin, basically it starts with a general policy (`+` to allow everything and `-` to block everything) an it follows a list of exceptions to the general rule, so:
 
 ```
 -
@@ -31,6 +31,6 @@ Will block all mimetypes except those that contain image in the MIME type string
 text/html
 ```
 
-On the other hand this second example allows the indexing of every document type but blocks the `text/html`. 
+On the other hand this second example allows the indexing of every document type but blocks the `text/html`.
 
-*Note*: Keep in mind that the rules that follows the global policy are evaluated as regular expressions.
+**NOTE**: Keep in mind that the rules that follows the global policy are evaluated as regular expressions.
