@@ -24,16 +24,21 @@ import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
+
 import org.apache.nutch.crawl.CrawlDatum;
 import org.apache.nutch.crawl.Inlinks;
+
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
 import org.apache.nutch.indexer.NutchDocument;
+
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.net.protocols.Response;
+
 import org.apache.nutch.util.MimeUtil;
 import org.apache.nutch.util.PrefixStringMatcher;
 import org.apache.nutch.util.TrieStringMatcher;
+import org.apache.tika.Tika;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -53,10 +58,8 @@ public class MimeTypeIndexingFilter implements IndexingFilter {
 
     private static final Logger LOG = LoggerFactory.getLogger(MimeTypeIndexingFilter.class);
 
-    /**
-     * Get the MimeTypes resolver instance.
-     */
     private MimeUtil MIME;
+    private Tika tika = new Tika();
 
     private TrieStringMatcher trie;
 
@@ -82,15 +85,17 @@ public class MimeTypeIndexingFilter implements IndexingFilter {
         }
 
         if (contentType == null) {
-            mimeType = MIME.getMimeType(url.toString());
+            mimeType = tika.detect(url.toString());
         } else {
             mimeType = MIME.forName(MimeUtil.cleanMimeType(contentType));
         }
 
         contentType = mimeType;
 
-        System.out.println("---> TYPE " + contentType);
-        System.out.println("---> TYPE " + trie.shortestMatch(contentType));
+        if (LOG.isInfoEnabled()) {
+            LOG.info(String.format("[MIMETYPE-FILTER] [%s] %s", contentType, url));
+        }
+
 
         if (null != trie) {
             if (trie.shortestMatch(contentType) == null) {
@@ -182,3 +187,4 @@ public class MimeTypeIndexingFilter implements IndexingFilter {
      * ------------------------------
      */
 }
+
