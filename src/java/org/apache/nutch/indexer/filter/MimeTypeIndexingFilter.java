@@ -54,137 +54,138 @@ import java.util.List;
  */
 public class MimeTypeIndexingFilter implements IndexingFilter {
 
-    public static final String MIMEFILTER_REGEX_FILE = "mimetype.filter.file";
+  public static final String MIMEFILTER_REGEX_FILE = "mimetype.filter.file";
 
-    private static final Logger LOG = LoggerFactory.getLogger(MimeTypeIndexingFilter.class);
+  private static final Logger LOG = LoggerFactory
+      .getLogger(MimeTypeIndexingFilter.class);
 
-    private MimeUtil MIME;
-    private Tika tika = new Tika();
+  private MimeUtil MIME;
+  private Tika tika = new Tika();
 
-    private TrieStringMatcher trie;
+  private TrieStringMatcher trie;
 
-    private Configuration conf;
+  private Configuration conf;
 
-    private boolean acceptMode = true;
+  private boolean acceptMode = true;
 
-    // Inherited JavaDoc
-    @Override
-    public NutchDocument filter(NutchDocument doc, Parse parse, Text url, CrawlDatum datum, Inlinks inlinks)
-            throws IndexingException {
+  // Inherited JavaDoc
+  @Override
+  public NutchDocument filter(NutchDocument doc, Parse parse, Text url,
+      CrawlDatum datum, Inlinks inlinks) throws IndexingException {
 
-        String mimeType;
-        String contentType;
+    String mimeType;
+    String contentType;
 
-        Writable tcontentType = datum.getMetaData().get(
-                new Text(Response.CONTENT_TYPE));
+    Writable tcontentType = datum.getMetaData()
+        .get(new Text(Response.CONTENT_TYPE));
 
-        if (tcontentType != null) {
-            contentType = tcontentType.toString();
-        } else {
-            contentType = parse.getData().getMeta(Response.CONTENT_TYPE);
-        }
-
-        if (contentType == null) {
-            mimeType = tika.detect(url.toString());
-        } else {
-            mimeType = MIME.forName(MimeUtil.cleanMimeType(contentType));
-        }
-
-        contentType = mimeType;
-
-        if (LOG.isInfoEnabled()) {
-            LOG.info(String.format("[MIMETYPE-FILTER] [%s] %s", contentType, url));
-        }
-
-
-        if (null != trie) {
-            if (trie.shortestMatch(contentType) == null) {
-                // no match, but
-                if (acceptMode) {
-                    return doc;
-                }
-                return null;
-            } else {
-                // matched, but we are blocking
-                if (acceptMode) {
-                    return null;
-                }
-            }
-        }
-
-        return doc;
+    if (tcontentType != null) {
+      contentType = tcontentType.toString();
+    } else {
+      contentType = parse.getData().getMeta(Response.CONTENT_TYPE);
     }
 
-    /*
-     * -----------------------------
-     * <implementation:Configurable> *
-     * -----------------------------
-     */
-    @Override
-    public void setConf(Configuration conf) {
-        this.conf = conf;
-        MIME = new MimeUtil(conf);
+    if (contentType == null) {
+      mimeType = tika.detect(url.toString());
+    } else {
+      mimeType = MIME.forName(MimeUtil.cleanMimeType(contentType));
+    }
 
-        // load the file of the values
-        String file = conf.get(MIMEFILTER_REGEX_FILE, "");
+    contentType = mimeType;
 
-        if (file != null) {
-            if (file.isEmpty()) {
-                LOG.warn(String.format("Missing %s property, all mimetypes will be allowed", MIMEFILTER_REGEX_FILE));
-            } else {
-                Reader reader = conf.getConfResourceAsReader(file);
+    if (LOG.isInfoEnabled()) {
+      LOG.info(String.format("[MIMETYPE-FILTER] [%s] %s", contentType, url));
+    }
 
-                try {
-                    readConfiguration(reader);
-                } catch (IOException e) {
-                    if (LOG.isErrorEnabled()) {
-                        LOG.error(e.getMessage());
-                    }
-
-                    throw new RuntimeException(e.getMessage(), e);
-                }
-            }
+    if (null != trie) {
+      if (trie.shortestMatch(contentType) == null) {
+        // no match, but
+        if (acceptMode) {
+          return doc;
         }
-    }
-
-    private void readConfiguration(Reader reader) throws IOException {
-        BufferedReader in = new BufferedReader(reader);
-        String line;
-        List rules = new ArrayList();
-
-        while (null != (line = in.readLine())) {
-            if (line.length() == 0) {
-                continue;
-            }
-
-            char first = line.charAt(0);
-            switch (first) {
-                case ' ':
-                case '\n':
-                case '#': // skip blank & comment lines
-                    break;
-                case '+':
-                    acceptMode = true;
-                    break;
-                case '-':
-                    acceptMode = false;
-                    break;
-                default:
-                    rules.add(line);
-                    break;
-            }
+        return null;
+      } else {
+        // matched, but we are blocking
+        if (acceptMode) {
+          return null;
         }
-
-        trie = new PrefixStringMatcher(rules);
+      }
     }
 
-    @Override
-    public Configuration getConf() {
-        return this.conf;
+    return doc;
+  }
+
+  /*
+   * -----------------------------
+   * <implementation:Configurable> *
+   * -----------------------------
+   */
+  @Override
+  public void setConf(Configuration conf) {
+    this.conf = conf;
+    MIME = new MimeUtil(conf);
+
+    // load the file of the values
+    String file = conf.get(MIMEFILTER_REGEX_FILE, "");
+
+    if (file != null) {
+      if (file.isEmpty()) {
+        LOG.warn(String
+            .format("Missing %s property, all mimetypes will be allowed",
+                MIMEFILTER_REGEX_FILE));
+      } else {
+        Reader reader = conf.getConfResourceAsReader(file);
+
+        try {
+          readConfiguration(reader);
+        } catch (IOException e) {
+          if (LOG.isErrorEnabled()) {
+            LOG.error(e.getMessage());
+          }
+
+          throw new RuntimeException(e.getMessage(), e);
+        }
+      }
     }
+  }
+
+  private void readConfiguration(Reader reader) throws IOException {
+    BufferedReader in = new BufferedReader(reader);
+    String line;
+    List rules = new ArrayList();
+
+    while (null != (line = in.readLine())) {
+      if (line.length() == 0) {
+        continue;
+      }
+
+      char first = line.charAt(0);
+      switch (first) {
+      case ' ':
+      case '\n':
+      case '#': // skip blank & comment lines
+        break;
+      case '+':
+        acceptMode = true;
+        break;
+      case '-':
+        acceptMode = false;
+        break;
+      default:
+        rules.add(line);
+        break;
+      }
+    }
+
+    trie = new PrefixStringMatcher(rules);
+  }
+
+  @Override
+  public Configuration getConf() {
+    return this.conf;
+  }
     /*
      * ------------------------------ * </implementation:Configurable> *
      * ------------------------------
      */
 }
-
