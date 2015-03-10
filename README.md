@@ -1,6 +1,9 @@
 mimetype-filter
 ===============
 
+## Note
+**This plugin has been merged in the trunk of the Nutch project. Starting from version 1.10 this plugin will be bundled with the Nutch distribution**
+
 Nutch 1.x plugin that allows to filter the indexed documents by the MIME type property of the crawled web pages. Basically this will allow you to restrict the MIME type of the contents that will be stored in Solr/Elasticsearch index without the need to restrict the crawling/parsing process, so no need to use URLFilter plugins family. Also this address one particular corner case when certain URLs doesn't have any format to filter such as some RSS feeds (`http://www.awesomesite.com/feed`) and it will end in your index mixed with all your HTML pages.
 
 Configuration
